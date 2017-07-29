@@ -5,6 +5,42 @@ __author__ = 'skyeagle'
 
 import time, datetime
 import tushare as ts
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+class Bigdeal():
+    def __init__(self, code, day, volume):
+        dd = ts.get_sina_dd(code, day, volume)
+        self.day=day
+        self.buy = dd[dd['type'].isin(['买盘'])]
+        self.sell = dd[dd['type'].isin(['卖盘'])]
+
+    def timePlot(self, dd, timeDelta):
+        timeVol = dd.loc[:, ['time', 'volume']]
+        timeVol = timeVol.sort_values(by='time')
+
+        self.rearrange(timeVol, timeDelta)
+        # plt.show()
+
+    def rearrange(self, dd, timeDelta):
+        sTime = '09:30:00'
+        eTime = '15:00:00'
+
+        startTime = sTime
+        endTime = datetime.datetime(startTime) + datetime.timedelta(minutes=30)
+        print(endTime)
+
+        tmp = dd[dd.loc[:, 'time'] < endTime]
+        sx = tmp[tmp.loc[:, 'time'] > startTime]
+        print(sx)
+
+    def buyTimePlot(self, timeDelta=30):
+        self.timePlot(self.buy, timeDelta)
+
+    def sellTimePlot(self, timeDelta=30):
+        self.timePlot(self.sell, timeDelta)
 
 
 def getday(today, dayNum):
@@ -13,32 +49,8 @@ def getday(today, dayNum):
     return d
 
 
-def industry_classified():
-    ic = ts.get_industry_classified()
-    print(ic)
-
-
-# 对某只股票的大单进行分析
-def dadan(code, day, volume):
-    """
-    :param code: 股票代码
-    :param day: 日期
-    :param volume: 交易股票数量
-    :return:
-    """
-
-    dd = ts.get_sina_dd(code, day, volume)
-    buy = dd[dd['type'].isin(['买盘'])]
-    sell = dd[dd['type'].isin(['卖盘'])]
-    buy_col = buy['volume'].values
-    sell_col = sell['volume'].values
-    print(buy_col)
-    print(sum(buy_col))
-    print(sell_col)
-    print(sum(sell_col))
-
-
 if __name__ == "__main__":
     today = datetime.date.today()
-    dateDay = getday(today, 0)
-    dadan(dateDay)
+    dateDay = getday(today, -1)
+    bd = Bigdeal('600516', dateDay, 1000)
+    bd.buyTimePlot(1)

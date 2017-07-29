@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 class Bigdeal():
     def __init__(self, code, day, volume):
         dd = ts.get_sina_dd(code, day, volume)
-        self.day=day
+        self.day = day
         self.buy = dd[dd['type'].isin(['买盘'])]
         self.sell = dd[dd['type'].isin(['卖盘'])]
 
@@ -21,20 +21,42 @@ class Bigdeal():
         timeVol = dd.loc[:, ['time', 'volume']]
         timeVol = timeVol.sort_values(by='time')
 
-        self.rearrange(timeVol, timeDelta)
-        # plt.show()
+        bigdf = self.rearrange(timeVol, timeDelta)
+        bigdf.plot(x='time', y='volume', kind='bar')
+
 
     def rearrange(self, dd, timeDelta):
+
+        # 生成时间间隔为timeDelta的DatetimeIndex
+        # 然后转换为时间的字符串
         sTime = '09:30:00'
         eTime = '15:00:00'
+        f = timeDelta.__str__() + 'Min'
+        rng = pd.date_range(sTime, eTime, freq=f)
+        timeList = []
+        for r in rng:
+            t = r.time().__str__()
+            timeList.append(t)
 
-        startTime = sTime
-        endTime = datetime.datetime(startTime) + datetime.timedelta(minutes=30)
-        print(endTime)
+        # 获取时间间隔内的大单交易量的和，方法为求出所有的和，
+        # 然后减去此时间间隔前的所有交易量
+        bigDealList = []
+        for i in range(0, len(timeList)):
+            bdt = dd[dd.loc[:, 'time'] < timeList[i]]
+            bdt = bdt.apply(np.cumsum)
+            if not bdt.empty:
+                x = bdt.iloc[len(bdt) - 1, 1]
+                if i != 0:
+                    value = x - np.sum(bigDealList[i - 1])
+                    bigDealList.append(value)
+                else:
+                    bigDealList.append(x)
+            else:
+                bigDealList.append(0)
 
-        tmp = dd[dd.loc[:, 'time'] < endTime]
-        sx = tmp[tmp.loc[:, 'time'] > startTime]
-        print(sx)
+        bigDF = pd.DataFrame({'time': timeList, 'volume': bigDealList})
+
+        return bigDF
 
     def buyTimePlot(self, timeDelta=30):
         self.timePlot(self.buy, timeDelta)
@@ -51,6 +73,8 @@ def getday(today, dayNum):
 
 if __name__ == "__main__":
     today = datetime.date.today()
-    dateDay = getday(today, -1)
-    bd = Bigdeal('600516', dateDay, 1000)
-    bd.buyTimePlot(1)
+    dataDay = getday(today, -2)
+    bd = Bigdeal('600516', dataDay, 100)
+    plt.figure()
+    bd.buyTimePlot()
+    bd.sellTimePlot()

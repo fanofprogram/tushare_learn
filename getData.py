@@ -17,13 +17,34 @@ class Bigdeal():
         self.buy = dd[dd['type'].isin(['买盘'])]
         self.sell = dd[dd['type'].isin(['卖盘'])]
 
-    def timePlot(self, dd, timeDelta):
+    def timePlot(self, timeDelta=30):
+        dd = self.buy
         timeVol = dd.loc[:, ['time', 'volume']]
         timeVol = timeVol.sort_values(by='time')
+        bigBuyDF = self.rearrange(timeVol, timeDelta)
 
-        bigdf = self.rearrange(timeVol, timeDelta)
-        bigdf.plot(x='time', y='volume', kind='bar')
+        dd = self.sell
+        timeVol = dd.loc[:, ['time', 'volume']]
+        timeVol = timeVol.sort_values(by='time')
+        bigSellDF = self.rearrange(timeVol, timeDelta)
 
+        timelist = []
+        for t in list(bigBuyDF.iloc[:, 0]):
+            strT = t[:-3]
+            timelist.append(strT)
+
+        blist = list(bigBuyDF.iloc[:, 1])
+        slist = list(bigSellDF.iloc[:, 1])
+        ax=plt.subplot(111)
+        plt.bar(left=range(0, len(timelist)), height=blist, width=0.5, color='red')
+        plt.hold
+        plt.bar(left=range(0, len(timelist)), height=slist, width=0.5, color='green')
+
+        plt.xticks(range(0, len(timelist)), timelist)
+        plt.legend(['buy','sell'])
+        ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
+        plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
+        plt.show()
 
     def rearrange(self, dd, timeDelta):
 
@@ -73,8 +94,6 @@ def getday(today, dayNum):
 
 if __name__ == "__main__":
     today = datetime.date.today()
-    dataDay = getday(today, -2)
+    dataDay = getday(today, -20)
     bd = Bigdeal('600516', dataDay, 100)
-    plt.figure()
-    bd.buyTimePlot()
-    bd.sellTimePlot()
+    bd.timePlot()

@@ -8,16 +8,34 @@ import tushare as ts
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager
 
 
 class Bigdeal():
     def __init__(self, code, day, volume):
         dd = ts.get_sina_dd(code, day, volume)
+        self.volume = volume
+        self.stockname = dd.iloc[0, 1]
         self.day = day
         self.buy = dd[dd['type'].isin(['买盘'])]
         self.sell = dd[dd['type'].isin(['卖盘'])]
 
-    def timePlot(self, timeDelta=30):
+    def getTotalBuy(self):
+        dd=self.buy
+        dd=dd.apply(np.cumsum)
+        total=dd.iloc[-1,4]
+        return total
+
+    def getTotalSell(self):
+        dd=self.sell
+        dd=dd.apply(np.cumsum)
+        total=dd.iloc[-1,4]
+        return total
+
+    def getNetBigDeal(self):
+        return self.getTotalBuy()-self.getTotalSell()
+
+    def dayPlot(self, timeDelta=30):
         dd = self.buy
         timeVol = dd.loc[:, ['time', 'volume']]
         timeVol = timeVol.sort_values(by='time')
@@ -35,15 +53,23 @@ class Bigdeal():
 
         blist = list(bigBuyDF.iloc[:, 1])
         slist = list(bigSellDF.iloc[:, 1])
-        ax=plt.subplot(111)
-        plt.bar(left=range(0, len(timelist)), height=blist, width=0.5, color='red')
+        ax = plt.subplot(111)
+        x = np.arange(0, len(timelist))
+        x1 = x * 2.5
+        x2 = x1 + 1
+        plt.bar(left=x1, height=blist, width=1, color='red')
         plt.hold
-        plt.bar(left=range(0, len(timelist)), height=slist, width=0.5, color='green')
+        plt.bar(left=x2, height=slist, width=1, color='green')
 
-        plt.xticks(range(0, len(timelist)), timelist)
-        plt.legend(['buy','sell'])
+        plt.xticks(x2, timelist)
+        plt.legend(['buy', 'sell'], loc='upper center', fancybox=True, shadow=True)
         ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
-        plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
+        # plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
+
+        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/win10/STXINGKA.TTF")
+        title = u"%s在%s日超过%d手的大单交易量分时图" % (self.stockname, self.day, self.volume)
+        plt.title(title, fontproperties=myfont)
+
         plt.show()
 
     def rearrange(self, dd, timeDelta):
@@ -79,12 +105,6 @@ class Bigdeal():
 
         return bigDF
 
-    def buyTimePlot(self, timeDelta=30):
-        self.timePlot(self.buy, timeDelta)
-
-    def sellTimePlot(self, timeDelta=30):
-        self.timePlot(self.sell, timeDelta)
-
 
 def getday(today, dayNum):
     delta = datetime.timedelta(days=-dayNum)
@@ -94,6 +114,7 @@ def getday(today, dayNum):
 
 if __name__ == "__main__":
     today = datetime.date.today()
-    dataDay = getday(today, -20)
-    bd = Bigdeal('600516', dataDay, 100)
-    bd.timePlot()
+    dataDay = getday(today, -2)
+    bd = Bigdeal('600516', dataDay, 500)
+    # bd.dayPlot()
+    bd.getTotalBuy()

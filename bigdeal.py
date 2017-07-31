@@ -13,35 +13,36 @@ import tools as tls
 
 
 class Bigdeal():
-    def __init__(self, code, day, volume):
+    def __init__(self, code, day=datetime.date.today(), volume=500):
+        self.isOpen = True
         dd = ts.get_sina_dd(code, day, volume)
-        self.volume = volume
-        self.stockname = dd.iloc[0, 1]
-        self.day = day
-        self.buy = dd[dd['type'].isin(['买盘'])]
-        self.sell = dd[dd['type'].isin(['卖盘'])]
+        if dd is None:
+            self.isOpen = False
+        else:
+            self.volume = volume
+            self.stockname = dd.iloc[0, 1]
+            self.day = day
+            self.buy = dd[dd['type'].isin(['买盘'])]
+            self.sell = dd[dd['type'].isin(['卖盘'])]
+
+    def getTotal(self, dd):
+        priceVol = dd.loc[:, ['price', 'volume']]
+        money = priceVol.loc[:, 'price'] * priceVol.loc[:, 'volume']
+        totalmoney = sum(list(money))
+        return totalmoney
 
     def getTotalBuy(self):
-        dd = self.buy
-        priceVol = dd.loc[:, ['price', 'volume']]
-        x=priceVol.loc[:,['price']]*priceVol.loc[:,['volume']]
-        print(x)
-        #
-        # dd = dd.apply(np.cumsum)
-        # total = dd.iloc[-1, 4]
-        # return total
+        return self.getTotal(self.buy)
 
     def getTotalSell(self):
-        dd = self.sell
-        dd = dd.apply(np.cumsum)
-        total = dd.iloc[-1, 4]
-        return total
+        return self.getTotal(self.sell)
 
     def getNetBigDeal(self):
-        pass
+        return self.getTotalBuy() - self.getTotalSell()
 
+    def oneDayPlot(self, timeDelta=30):
+        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/simhei.ttf")
 
-    def dayPlot(self, timeDelta=30):
         dd = self.buy
         timeVol = dd.loc[:, ['time', 'volume']]
         timeVol = timeVol.sort_values(by='time')
@@ -57,8 +58,8 @@ class Bigdeal():
             strT = t[:-3]
             timelist.append(strT)
 
-        blist = list(bigBuyDF.iloc[:, 1])
-        slist = list(bigSellDF.iloc[:, 1])
+        blist = list(bigBuyDF.iloc[:, 1] / 100)
+        slist = list(bigSellDF.iloc[:, 1] / 100)
         ax = plt.subplot(111)
         x = np.arange(0, len(timelist))
         x1 = x * 2.5
@@ -72,9 +73,19 @@ class Bigdeal():
         ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
         # plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
 
-        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/simhei.ttf")
+        yl = u'单位(手）'
+        plt.ylabel(yl, fontproperties=myfont)
+
         title = u"%s在%s日超过%d手的大单交易量分时图" % (self.stockname, self.day, self.volume)
         plt.title(title, fontproperties=myfont)
+
+        money = round(self.getNetBigDeal() / 10000)
+        strMoney = u"%s在%s日超过%d手的大单净流入人民币%d万元" % (self.stockname, self.day, self.volume, money)
+        if money < 0:
+            strMoney = u"%s在%s日超过%d手的大单净流出人民币%d万元" % (self.stockname, self.day, self.volume, money)
+        textx = x1[1]
+        texty = max([max(slist), max(blist)]) * 7 / 8
+        plt.text(6, texty, strMoney, fontproperties=myfont)
 
         plt.show()
 
@@ -111,10 +122,78 @@ class Bigdeal():
 
         return bigDF
 
+    @staticmethod
+    def numberDaysPlot(code, daysNumbers, volume=500):
+        startDay = tls.Tools.getday(-daysNumbers)
+        dayIndex = pd.date_range(startDay, periods=daysNumbers + 1)
+        buylist = []
+        selllist = []
+        daylist = []
+        stockname = " "
+        for day in dayIndex:
+            bd = Bigdeal(code, day, volume)
+            if bd.isOpen == True:
+                stockname = bd.stockname
+                buySum = bd.getTotalBuy() / 10000
+                sellSum = bd.getTotalSell() / 10000
+                buylist.append(buySum)
+                selllist.append(sellSum)
+                d = day.__str__().split(' ')[0]
+                daylist.append(d)
+
+        ax = plt.subplot(111)
+        x = np.arange(0, len(daylist))
+        x1 = x * 2.5
+        x2 = x1 + 1
+        plt.bar(left=x1, height=buylist, width=1, color='red')
+        plt.hold
+        plt.bar(left=x2, height=selllist, width=1, color='green')
+
+        plt.xticks(x2, daylist)
+        plt.legend(['buy', 'sell'], loc='upper center', fancybox=True, shadow=True)
+        ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
+        # plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
+        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/simhei.ttf")
+        yl = u'单位(万元）'
+        plt.ylabel(yl, fontproperties=myfont)
+
+        title = u"%s在%d日内超过%d手的大单交易量" % (stockname, daysNumbers, volume)
+        plt.title(title, fontproperties=myfont)
+
+        money = round(sum(buylist) - sum(selllist))
+        strMoney = u"%s在%s日超过%d手的大单净流入人民币%d万元" % (stockname, daysNumbers, volume, money)
+        if money < 0:
+            strMoney = u"%s在%s日超过%d手的大单净流出人民币%d万元" % (stockname, daysNumbers, volume, money)
+        textx = x2[0]
+        texty = max([max(buylist), max(selllist)]) * 6 / 8
+        plt.text(textx, texty, strMoney, fontproperties=myfont)
+
+        plt.show()
+
+    @staticmethod
+    def numberDaysNet(code, daysNumbers, volume=500):
+        startDay = tls.Tools.getday(-daysNumbers)
+        dayIndex = pd.date_range(startDay, periods=daysNumbers + 1)
+        netBigDeal = []
+        daylist = []
+        for day in dayIndex:
+            bd = Bigdeal(code, day, volume)
+            if bd.isOpen == True:
+                buySum = bd.getTotalBuy()
+                sellSum = bd.getTotalSell()
+                flag = True
+                if sellSum > buySum:
+                    flag = False
+                netBigDeal.append(flag)
+                d = day.__str__().split(' ')[0]
+                daylist.append(d)
+        df = pd.DataFrame(netBigDeal, daylist)
+        print(df)
+
 
 if __name__ == "__main__":
-    today = datetime.date.today()
-    dataDay = tls.Tools.getday(today, -3)
-    bd = Bigdeal('000795', today, 1000)
-    # bd.dayPlot()
-    bd.getTotalBuy()
+    # day = tls.Tools.getday()
+    # bd = Bigdeal('000795')
+    # bd.oneDayPlot()
+    # Bigdeal.numberDaysPlot('000795', 16)
+    Bigdeal.numberDaysNet('000795', 5)

@@ -22,19 +22,24 @@ class Bigdeal():
         self.sell = dd[dd['type'].isin(['卖盘'])]
 
     def getTotalBuy(self):
-        dd=self.buy
-        dd=dd.apply(np.cumsum)
-        total=dd.iloc[-1,4]
-        return total
+        dd = self.buy
+        priceVol = dd.loc[:, ['price', 'volume']]
+        x=priceVol.loc[:,['price']]*priceVol.loc[:,['volume']]
+        print(x)
+        #
+        # dd = dd.apply(np.cumsum)
+        # total = dd.iloc[-1, 4]
+        # return total
 
     def getTotalSell(self):
-        dd=self.sell
-        dd=dd.apply(np.cumsum)
-        total=dd.iloc[-1,4]
+        dd = self.sell
+        dd = dd.apply(np.cumsum)
+        total = dd.iloc[-1, 4]
         return total
 
     def getNetBigDeal(self):
-        return self.getTotalBuy()-self.getTotalSell()
+        pass
+
 
     def dayPlot(self, timeDelta=30):
         dd = self.buy
@@ -67,7 +72,7 @@ class Bigdeal():
         ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
         # plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
 
-        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/win10/STXINGKA.TTF")
+        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/simhei.ttf")
         title = u"%s在%s日超过%d手的大单交易量分时图" % (self.stockname, self.day, self.volume)
         plt.title(title, fontproperties=myfont)
 
@@ -95,7 +100,7 @@ class Bigdeal():
             if not bdt.empty:
                 x = bdt.iloc[len(bdt) - 1, 1]
                 if i != 0:
-                    value = x - np.sum(bigDealList[i - 1])
+                    value = x - np.sum(bigDealList)
                     bigDealList.append(value)
                 else:
                     bigDealList.append(x)
@@ -109,7 +114,7 @@ class Bigdeal():
 
 if __name__ == "__main__":
     today = datetime.date.today()
-    dataDay = tls.Tools.getday(today, -4)
-    bd = Bigdeal('600516', dataDay, 500)
+    dataDay = tls.Tools.getday(today, -3)
+    bd = Bigdeal('000795', today, 1000)
     # bd.dayPlot()
     bd.getTotalBuy()

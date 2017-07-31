@@ -3,12 +3,13 @@
 
 __author__ = 'skyeagle'
 
-import time, datetime
+import datetime
 import tushare as ts
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
+import tools as tls
 
 
 class Bigdeal():
@@ -106,15 +107,9 @@ class Bigdeal():
         return bigDF
 
 
-def getday(today, dayNum):
-    delta = datetime.timedelta(days=-dayNum)
-    d = today - delta
-    return d
-
-
 if __name__ == "__main__":
     today = datetime.date.today()
-    dataDay = getday(today, -2)
+    dataDay = tls.Tools.getday(today, -4)
     bd = Bigdeal('600516', dataDay, 500)
     # bd.dayPlot()
     bd.getTotalBuy()

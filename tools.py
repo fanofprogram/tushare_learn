@@ -10,7 +10,7 @@ class Tools():
         pass
 
     @staticmethod
-    def getday(today, dayNum):
+    def getday(dayNum,today=datetime.datetime.today()):
         delta = datetime.timedelta(days=-dayNum)
         d = today - delta
         return d

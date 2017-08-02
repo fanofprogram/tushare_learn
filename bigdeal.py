@@ -124,7 +124,7 @@ class Bigdeal():
 
     @staticmethod
     def numberDaysPlot(code, daysNumbers, volume=500):
-        startDay = tls.Tools.getday(-daysNumbers)
+        startDay = tls.getday(-daysNumbers)
         dayIndex = pd.date_range(startDay, periods=daysNumbers + 1)
         buylist = []
         selllist = []
@@ -172,7 +172,7 @@ class Bigdeal():
 
     @staticmethod
     def numberDaysNet(code, daysNumbers, volume=500):
-        startDay = tls.Tools.getday(-daysNumbers)
+        startDay = tls.getday(-daysNumbers)
         dayIndex = pd.date_range(startDay, periods=daysNumbers + 1)
         netBigDeal = []
         daylist = []
@@ -192,8 +192,9 @@ class Bigdeal():
 
 
 if __name__ == "__main__":
-    # day = tls.Tools.getday()
-    # bd = Bigdeal('000795')
-    # bd.oneDayPlot()
-    # Bigdeal.numberDaysPlot('000795', 16)
-    Bigdeal.numberDaysNet('000795', 5)
+    day = tls.getday(-1)
+    today = datetime.date.today()
+    bd = Bigdeal('600884', volume=600)
+    bd.oneDayPlot()
+    # Bigdeal.numberDaysPlot('000795', 5)
+    # Bigdeal.numberDaysNet('000795', 5)

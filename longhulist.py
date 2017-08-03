@@ -10,12 +10,18 @@ import tools as tls
 
 
 def top_list(day=datetime.date.today()):
+    #获取龙虎榜数据
     strday = day.__str__()
     topList = ts.top_list(strday)
     return topList
 
 
 def continueInTopList(dayNumbers):
+    """
+    连续n天出现在龙虎榜
+    :param dayNumbers:
+    :return:
+    """
     # 获取向前推算n天的日期
     daylist = tls.generateDaysList(dayNumbers)
     longhulist = []

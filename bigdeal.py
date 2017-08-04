@@ -59,7 +59,7 @@ class Bigdeal():
         :return:
         """
         # 使用fc-list :lang=zh查看系统中的中文字体
-        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/win10/STZHONGS.TTF")
+        myfont = matplotlib.font_manager.FontProperties(fname="msyhbd.ttf")
 
         # 对买盘或卖盘进行数据处理，主要是将某个时间段内的大单求和
         dd = self.buy
@@ -132,7 +132,6 @@ class Bigdeal():
             if t == '12:00:00' or t == '12:30:00' or t == '13:00:00':
                 continue
             timeList.append(t)
-        print(timeList)
 
         # 获取时间间隔内的大单交易量的和，方法为求出所有的和，
         # 然后减去此时间间隔前的所有交易量
@@ -189,7 +188,7 @@ class Bigdeal():
         plt.legend(['buy', 'sell'], loc='upper center', fancybox=True, shadow=True)
         ax.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%i'))
         # plt.setp(ax.get_xaxis().get_majorticklabels(), rotation=-45)
-        myfont = matplotlib.font_manager.FontProperties(fname="/usr/share/fonts/simhei.ttf")
+        myfont = matplotlib.font_manager.FontProperties(fname="msyhbd.ttf")
         yl = u'单位(万元）'
         plt.ylabel(yl, fontproperties=myfont)
 

@@ -10,7 +10,7 @@ import tools as tls
 
 
 def top_list(day=datetime.date.today()):
-    #获取龙虎榜数据
+    # 获取龙虎榜数据
     strday = day.__str__()
     topList = ts.top_list(strday)
     return topList
@@ -43,8 +43,9 @@ def continueInTopList(dayNumbers):
     interestingCodeList = []
     for i in range(0, len(codecount)):
         counts = codecount.iloc[i]
-        if counts >= len(longhuday):
-            interestingCodeList.append(codecount.index[i])
+        # if counts >= len(longhuday):
+        #     interestingCodeList.append(codecount.index[i])
+        interestingCodeList.append(codecount.index[i])
     pdlist = pd.DataFrame()
     for code in interestingCodeList:
         for lh in longhulist:
@@ -54,8 +55,22 @@ def continueInTopList(dayNumbers):
     return pdlist
 
 
+def countInList(days=1):
+    """
+    获取所有10天内上龙虎榜
+    :param days:
+    :return:
+    """
+    df = ts.cap_tops(days)
+    # df = df[df.loc[:, 'net'] > 0]
+    sortdf = df.sort_values(by='count', ascending=False)
+    # print(sortdf)
+    print(sortdf[sortdf.loc[:, 'name'] == '方大炭素'])
+
+
 if __name__ == '__main__':
-    day = tls.getday(-1)
+    # day = tls.getday(-1)
     # top_list(day)
-    longhupdf = continueInTopList(3)
-    longhupdf.to_excel("longhu.xlsx")
+     longhupdf = continueInTopList(10)
+     longhupdf.to_excel("longhu.xlsx")
+    # countInList(10)
